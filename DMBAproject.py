@@ -3,15 +3,15 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import gurobipy as gp
-np.random.default_rng(seed=6)
+np.random.seed(6)
 
 #%% 6. Generate data
 def GenerateKnapsackData(n, w_max, alpha):
     w = np.zeros(n)
     v = np.zeros(n)
     for i in range(n):
-        w[i] = np.random.randint(low=0, high=w_max)
-        v[i] = w[i] + np.random.randint(low=1, high=w_max//5) #we let c[i] be correlated with w[i] with added randomness. Make sure we do not have 0's. 
+        w[i] = np.random.randint(low=1, high=w_max) #Make sure we do not have 0's. Divsision by 0 error
+        v[i] = w[i] + np.random.randint(low=0, high=w_max//5)  #we let v[i] be correlated with w[i] with added randomness. 
     w_sum = np.sum(w)
     W = int(round(alpha * w_sum,0))
     return w,v,W
@@ -77,11 +77,26 @@ opt_val_dyn = DynamicProgrammingKnapsack(n,w,v,W)
 #%% 3. Greedy Heuristic for KP
 def GreedyHeuristicKnapsack(n,w,v,W):
     ratio = v/w
-    ratio_sorted = np.sort(ratio)
-    print(ratio_sorted)
+    full_overview = np.array([ratio, v, w])
+    sorted_ratio = np.argsort(ratio)[::-1]
+    sorted_overview = full_overview[:, sorted_ratio]
+    weight_knapsack = 0
+    value_knapsack = 0
+    i = 0
+    while weight_knapsack < W and i<n:
+        #add if item will not exceed the capacity W
+        if weight_knapsack+sorted_overview[1,i]<W:
+            i+=1
+            weight_knapsack+=sorted_overview[1,i] 
+            value_knapsack+=sorted_overview[2,i]
+            continue;  
+        #keep looping (search remaining items)
+        i+=1
+    #print(sorted_overview)
+    print(value_knapsack)
+    return value_knapsack    
     
-
-GreedyHeuristicKnapsack(n,w,v,W)
+opt_val_greedy = GreedyHeuristicKnapsack(n,w,v,W)
 
 #%% 4. Using a NN to approximately solve the Dynamic Programming (Q-learning)
 
