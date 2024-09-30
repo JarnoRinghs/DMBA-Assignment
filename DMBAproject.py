@@ -16,7 +16,7 @@ def GenerateKnapsackData(n, w_max, alpha):
     W = int(round(alpha * w_sum,0))
     return w,v,W
     
-n=100
+n=500
 w_max = 100
 alpha = 0.3
 w,v,W = GenerateKnapsackData(n, w_max, alpha)
