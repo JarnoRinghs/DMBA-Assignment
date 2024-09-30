@@ -58,6 +58,7 @@ def BinaryProgrammingKnapsack(n,w,v,W):
 opt_val_bin = BinaryProgrammingKnapsack(n, w, v, W)
 
 #%% 2. Dynamic Programming of KP
+#If we set n=10000, we get memory error after a while
 def DynamicProgrammingKnapsack(n,w,v,W):
     M = {}
     for j in range(W+1):
@@ -98,9 +99,8 @@ def GreedyHeuristicKnapsack(n,w,v,W):
     
 opt_val_greedy = GreedyHeuristicKnapsack(n,w,v,W)
 
-#%% 4. Using a NN to approximately solve the Dynamic Programming (Q-learning)
+#%% 4. Using a NN to approximately solve the Dynamic Programming (Q-learning) - we will choose 4, not 5
+#Set n=10000?
 
-
-#No 5. (Using RL to improve the heuristic with Greedy Heuristic)
 
 
