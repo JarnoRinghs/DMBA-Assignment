@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import gurobipy as gp
 import random
 import time
+import math
 np.random.seed(6)
 
 #%% 6. Generate data
@@ -18,11 +19,18 @@ def GenerateKnapsackData(n, w_max, alpha):
     W = int(round(alpha * w_sum,0))
     return w,v,W
     
-n=100
+n=200
 w_max = 100
 alpha = 0.3
-w,v,W = GenerateKnapsackData(n, w_max, alpha)
+# w,v,W = GenerateKnapsackData(n, w_max, alpha)
 
+from Knapsack_Instances import profit_ceil
+w,v = profit_ceil(n,1000)
+W = math.floor(alpha * np.sum(w))
+
+
+print(w)
+print(v)
 #%% 1. Binary Programming of KP
 def BinaryProgrammingKnapsack(n,w,v,W):
     knapsack = gp.Model("Knapsack Binary Programming")
@@ -78,11 +86,11 @@ def DynamicProgrammingKnapsack(n,w,v,W):
     
     return opt
 
-start_time_dyn = time.time()
-opt_val_dyn = DynamicProgrammingKnapsack(n,w,v,W)
-end_time_dyn = time.time()
-run_time_dyn = end_time_dyn - start_time_dyn
-print('Optimal Value Dynamic Programming: {}, in {} seconds.'.format(opt_val_dyn, run_time_dyn))
+# start_time_dyn = time.time()
+# opt_val_dyn = DynamicProgrammingKnapsack(n,w,v,W)
+# end_time_dyn = time.time()
+# run_time_dyn = end_time_dyn - start_time_dyn
+# print('Optimal Value Dynamic Programming: {}, in {} seconds.'.format(opt_val_dyn, run_time_dyn))
         
 #%% 3. Greedy Heuristic for KP
 def GreedyHeuristicKnapsack(n,w,v,W):
@@ -96,13 +104,14 @@ def GreedyHeuristicKnapsack(n,w,v,W):
     while weight_knapsack < W and i<n:
         #add if item will not exceed the capacity W
         if weight_knapsack+sorted_overview[1,i]<W:
-            i+=1
             weight_knapsack+=sorted_overview[1,i] 
             value_knapsack+=sorted_overview[2,i]
+            i+=1
             continue;  
         #keep looping (search remaining items)
         i+=1
     #print(sorted_overview)
+    print(weight_knapsack)
     return value_knapsack    
 
 start_time_greedy = time.time()
@@ -110,7 +119,7 @@ opt_val_greedy = GreedyHeuristicKnapsack(n,w,v,W)
 end_time_greedy = time.time()
 run_time_greedy = end_time_greedy - start_time_greedy
 print('Optimal Value Greedy Heuristic: {}, in {} seconds.'.format(opt_val_greedy, run_time_greedy))
-
+print(W)
 #%%4. 
 
 
