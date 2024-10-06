@@ -10,7 +10,7 @@ from tensorflow.keras import layers
 
 
 n = 10
-w_max = 10000000
+w_max = 1000
 alpha = 0.3
 
 def GenerateKnapsackData(n, w_max):
@@ -62,18 +62,20 @@ model.add(layers.Dense(3, activation="relu"))
 model.add(layers.Dense(2, activation="linear"))
 model.compile(loss="mse", optimizer="adam", metrics=['mse'])
 
-# Het idee in het kort:
-# Onze tabel vervangen we door een neural network. Gegeven de value, weight, ratio en weight left in de knapsack,
-# doet deze een expected return bepalen voor de actie om hem erin te stoppen of niet. 
-# Vervolgens pakken we met een probability van epsilon een random actie en anders de optimale
-# Deze actie geven we een reward (value als het past en, -1* w_max als het item niet past)
-# Vervolgens is de value die we eigenlijk willen dat uit ons NN komt deze reward
-# plus de expected return van de optimale actie in de state waar je in terecht komt (deze berekenen we ook dmv ons NN)
-# Vervolgens doen we ons NN op deze target value fitten
-# Dit doen we voor ieder object.
-# In totaal beginnen we num_episodes keer opnieuw aan het vullen
-# Het belangrijke: We koppelen hier onze estimation los van de grootte van W
-# num_episodes kunnen we zelf bepalen. HIERDOOR IS DE Q-LEARNING SNELLER VOOR HELEV GROTE WAARDES VAN W
+'''
+Het idee in het kort:
+Onze tabel vervangen we door een neural network. Gegeven de value, weight, ratio en weight left in de knapsack,
+doet deze een expected return bepalen voor de actie om hem erin te stoppen of niet. 
+Vervolgens pakken we met een probability van epsilon een random actie en anders de optimale
+Deze actie geven we een reward (value als het past en, -1* w_max als het item niet past)
+Vervolgens is de value die we eigenlijk willen dat uit ons NN komt deze reward
+plus de expected return van de optimale actie in de state waar je in terecht komt (deze berekenen we ook dmv ons NN)
+Vervolgens doen we ons NN op deze target value fitten
+Dit doen we voor ieder object.
+In totaal beginnen we num_episodes keer opnieuw aan het vullen
+Het belangrijke: We koppelen hier onze estimation los van de grootte van W
+num_episodes kunnen we zelf bepalen. HIERDOOR IS DE Q-LEARNING SNELLER VOOR HELEV GROTE WAARDES VAN W
+'''
 
 for j in range(num_episodes):
     print(j)
@@ -89,7 +91,7 @@ for j in range(num_episodes):
         if np.random.random() < eps:
             action = np.random.randint(0, 2)
         else:
-            action = np.argmax(model.predict(state.reshape(1, -1)))
+            action = np.argmax(model.predict(state.reshape(1, -1), verbose=0))
 
         #Reward is value als de item past zo niet punish met 0.1*w_max
         if action == 1:
@@ -108,7 +110,7 @@ for j in range(num_episodes):
         #Bepaal target value. 
         # Laatste item in de rij is laatste state. Dus daar is de target_value alleen de reward
             next_state = np.array([w[i+1], v[i+1], v[i+1]/w[i+1], w_left])
-            target_value = reward + discount_factor * np.max(model.predict(next_state.reshape(1, -1)))
+            target_value = reward + discount_factor * np.max(model.predict(next_state.reshape(1, -1), verbose=0))
         else:
             target_value = reward
         # Fit het model op de target value. Q-LEARNING!!!!!!
