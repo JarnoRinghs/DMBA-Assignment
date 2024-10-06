@@ -9,15 +9,13 @@ import math
 np.random.seed(6)
 
 #%% 6. Generate data
-def GenerateKnapsackData(n, w_max, alpha):
+def GenerateKnapsackData(n, w_max):
     w = np.zeros(n)
     v = np.zeros(n)
     for i in range(n):
         w[i] = np.random.randint(low=1, high=w_max) #Make sure we do not have 0's. Divsision by 0 error
         v[i] = w[i] + np.random.randint(low=0, high=w_max//5)  #we let v[i] be correlated with w[i] with added randomness. 
-    w_sum = np.sum(w)
-    W = int(round(alpha * w_sum,0))
-    return w,v,W
+    return w,v
     
 n=200
 w_max = 100
@@ -72,7 +70,7 @@ print("Optimal Value Gurobi (Binary Programming): {}, in {} seconds.".format(opt
 
 #%% 2. Dynamic Programming of KP
 #If we set n=10000, we get memory error after a while
-def DynamicProgrammingKnapsack(n,w,v,W):
+def DynamicProgrammingKnapsack(n,w,v,W, return_M=False):
     M = {}
     for j in range(W+1):
         M[(0,j)] = 0
@@ -84,13 +82,15 @@ def DynamicProgrammingKnapsack(n,w,v,W):
                 M[(i, j)] = max(M[(i - 1, j)], v[i-1] + M[(i-1, j - w[i-1])])
     opt = M[(n,W)]
     
+    if return_M: 
+        return M
     return opt
 
-# start_time_dyn = time.time()
-# opt_val_dyn = DynamicProgrammingKnapsack(n,w,v,W)
-# end_time_dyn = time.time()
-# run_time_dyn = end_time_dyn - start_time_dyn
-# print('Optimal Value Dynamic Programming: {}, in {} seconds.'.format(opt_val_dyn, run_time_dyn))
+start_time_dyn = time.time()
+opt_val_dyn = DynamicProgrammingKnapsack(n,w,v,W)
+end_time_dyn = time.time()
+run_time_dyn = end_time_dyn - start_time_dyn
+print('Optimal Value Dynamic Programming: {}, in {} seconds.'.format(opt_val_dyn, run_time_dyn))
         
 #%% 3. Greedy Heuristic for KP
 def GreedyHeuristicKnapsack(n,w,v,W):
