@@ -127,15 +127,15 @@ def NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations):
     beta = 0.995
     gamma = 0.6
     num_episodes = 25
-    
+'''  
     # Initialize the model
     model = keras.Sequential()
     input_shape = 4
     model.add(layers.Input(shape=(input_shape,)))
     model.add(layers.Dense(20, activation="relu"))
-    model.add(layers.Dense(10, activation="linear"))
+    model.add(layers.Dense(2, activation="linear"))'Wrm die 10 weer?'
     model.compile(loss="mse", optimizer="adam", metrics=['mse'])
-
+'''
     best_items = []
     best_value = 0
     
