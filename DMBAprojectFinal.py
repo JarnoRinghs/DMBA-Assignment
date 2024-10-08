@@ -8,9 +8,10 @@ import time
 import math
 from tensorflow import keras
 from tensorflow.keras import layers
-np.random.seed(6)
+#np.random.seed(6)
 
 #%% 6. Generate data
+'''
 def GenerateKnapsackData(n, w_max, alpha):
     w = np.zeros(n)
     v = np.zeros(n)
@@ -20,21 +21,18 @@ def GenerateKnapsackData(n, w_max, alpha):
     w_sum = np.sum(w)
     W = int(round(alpha * w_sum,0))
     return w,v,W
+'''
+def GenerateKnapsackData(n,w_max,alpha):
+    weights = np.random.randint(1,w_max,n)
+    profits = weights + np.ceil(w_max/10)
+    W = int(round(alpha*np.sum(weights),0))
+    return weights,profits,W
     
-n=100
-w_max = 10e4
+n=10
+w_max =100
 alpha = 0.3
 w,v,W = GenerateKnapsackData(n, w_max, alpha)
 
-'''
-from Knapsack_Instances import profit_ceil
-w,v = profit_ceil(n,1000)
-W = math.floor(alpha * np.sum(w))
-'''
-
-print(w)
-print(v)
-print(W)
 #%% 1. Binary Programming of KP
 def BinaryProgrammingKnapsack(n,w,v,W):
     knapsack = gp.Model("Knapsack Binary Programming")
@@ -86,7 +84,7 @@ def DynamicProgrammingKnapsack(n,w,v,W):
                 M[(i,j)] = M[(i-1, j)]
             else:
                 M[(i, j)] = max(M[(i - 1, j)], v[i-1] + M[(i-1, j - w[i-1])])
-        print('Point: {}.'.format(i))
+        #print('Point: {}.'.format(i))
     opt = M[(n,W)]
     return opt
 
@@ -122,6 +120,7 @@ end_time_greedy = time.time()
 run_time_greedy = end_time_greedy - start_time_greedy
 print('Optimal Value Greedy Heuristic: {}, in {} seconds.'.format(opt_val_greedy, run_time_greedy))
 #%%4. Using a NN to approximately solve the Dynamic Programming (NDP) - We will do exercise 4 not 5
+
 def NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations):
     ##Initlaliseer parameters voor q-learning
     epsilon = 0.9
@@ -136,27 +135,12 @@ def NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations):
     model.add(layers.Dense(20, activation="relu"))
     model.add(layers.Dense(10, activation="linear"))
     model.compile(loss="mse", optimizer="adam", metrics=['mse'])
-    
-    '''
-    Het idee in het kort:
-    Onze tabel vervangen we door een neural network. Gegeven de value, weight, ratio en weight left in de knapsack,
-    doet deze een expected return bepalen voor de actie om hem erin te stoppen of niet. 
-    Vervolgens pakken we met een probability van epsilon een random actie en anders de optimale
-    Deze actie geven we een reward (value als het past en, -1* w_max als het item niet past)
-    Vervolgens is de value die we eigenlijk willen dat uit ons NN komt deze reward
-    plus de expected return van de optimale actie in de state waar je in terecht komt (deze berekenen we ook dmv ons NN)
-    Vervolgens doen we ons NN op deze target value fitten
-    Dit doen we voor ieder object.
-    In totaal beginnen we num_episodes keer opnieuw aan het vullen
-    Het belangrijke: We koppelen hier onze estimation los van de grootte van W
-    num_episodes kunnen we zelf bepalen. HIERDOOR IS DE Q-LEARNING SNELLER VOOR HELEV GROTE WAARDES VAN W
-    '''
+
     best_items = []
     best_value = 0
     
     for j in range(num_episodes):
         print('Iteration {} is running.'.format(j+1))
-        # Hanteer epsilon greedy policy met decaying epsilon
         epsilon = max(epsilon*beta,0.1)
         items = []
         w_left = W
@@ -169,7 +153,6 @@ def NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations):
             else:
                 action = np.argmax(model.predict(state.reshape(1, -1), verbose=0))
     
-            #Reward is value als de item past zo niet punish met 0.1*w_max
             if action == 1:
                 w_left -= w[i]
                 if w_left < 0:
@@ -182,13 +165,10 @@ def NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations):
                 reward = 0
             
             if i < n-1:
-            #Bepaal target value. 
-            # Laatste item in de rij is laatste state. Dus daar is de target_value alleen de reward
                 next_state = np.array([w[i+1], v[i+1], v[i+1]/w[i+1], w_left])
                 target_value = reward + gamma * np.max(model.predict(next_state.reshape(1, -1), verbose=0))
             else:
                 target_value = reward
-            # Fit het model op de target value. Q-LEARNING!!!!!!
             q_values = model.predict(state.reshape(1,-1), verbose=0)
             q_values[0][action] = target_value
             model.fit(state.reshape(1, -1), q_values, epochs=1, verbose=0)

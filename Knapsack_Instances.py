@@ -7,13 +7,17 @@ def circle(n,R,d = 2/3):
     weights = np.random.randint(1,R,n)
     profits = d * np.sqrt(4*R**2 - (weights - 2*R)**2)
     return weights,profits
-
+'''
 def profit_ceil(n,R,d = 3):
     # Paper chooses d = 3
     weights = np.random.randint(1,R,n)
     profits = d*np.ceil(weights/d)
     return weights,profits
-    
+'''
+def correlated_instances(n,w_max):
+    weights = np.random.randint(1,w_max,n)
+    profits = weights + np.ceil(w_max/10)
+    return weights,profits
     
 def spanner(n,R,v,m = 10):
     weights_span = np.random.randint(1,R,v)
