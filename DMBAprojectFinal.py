@@ -8,7 +8,7 @@ import time
 import math
 from tensorflow import keras
 from tensorflow.keras import layers
-#np.random.seed(6)
+np.random.seed(6)
 
 #%% 6. Generate data
 '''
@@ -28,10 +28,9 @@ def GenerateKnapsackData(n,w_max,alpha):
     W = int(round(alpha*np.sum(weights),0))
     return weights,profits,W
     
-n=10
-w_max =100
-alpha = 0.3
-w,v,W = GenerateKnapsackData(n, w_max, alpha)
+n_values = [10,30,50]
+w_max_values = [10,10e3,10e5,10e6]
+alpha = 0.4
 
 #%% 1. Binary Programming of KP
 def BinaryProgrammingKnapsack(n,w,v,W):
@@ -66,11 +65,6 @@ def BinaryProgrammingKnapsack(n,w,v,W):
     opt_val = knapsack.ObjVal
     return opt_val
 
-start_time_bin = time.time()
-opt_val_bin = BinaryProgrammingKnapsack(n, w, v, W)
-end_time_bin = time.time()
-run_time_bin = end_time_bin - start_time_bin
-print("Optimal Value Gurobi (Binary Programming): {}, in {} seconds.".format(opt_val_bin, run_time_bin))
 
 #%% 2. Dynamic Programming of KP
 #If we set n=10000, we get memory error after a while
@@ -88,11 +82,7 @@ def DynamicProgrammingKnapsack(n,w,v,W):
     opt = M[(n,W)]
     return opt
 
-start_time_dyn = time.time()
-opt_val_dyn = DynamicProgrammingKnapsack(n,w,v,W)
-end_time_dyn = time.time()
-run_time_dyn = end_time_dyn - start_time_dyn
-print('Optimal Value Dynamic Programming: {}, in {} seconds.'.format(opt_val_dyn, run_time_dyn))
+
         
 #%% 3. Greedy Heuristic for KP
 def GreedyHeuristicKnapsack(n,w,v,W):
@@ -114,11 +104,6 @@ def GreedyHeuristicKnapsack(n,w,v,W):
         i+=1
     return value_knapsack    
 
-start_time_greedy = time.time()
-opt_val_greedy = GreedyHeuristicKnapsack(n,w,v,W)
-end_time_greedy = time.time()
-run_time_greedy = end_time_greedy - start_time_greedy
-print('Optimal Value Greedy Heuristic: {}, in {} seconds.'.format(opt_val_greedy, run_time_greedy))
 #%%4. Using a NN to approximately solve the Dynamic Programming (NDP) - We will do exercise 4 not 5
 
 def NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations):
@@ -127,15 +112,13 @@ def NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations):
     beta = 0.995
     gamma = 0.6
     num_episodes = 25
-'''  
     # Initialize the model
     model = keras.Sequential()
     input_shape = 4
     model.add(layers.Input(shape=(input_shape,)))
     model.add(layers.Dense(20, activation="relu"))
-    model.add(layers.Dense(2, activation="linear"))'Wrm die 10 weer?'
+    model.add(layers.Dense(2, activation="linear"))
     model.compile(loss="mse", optimizer="adam", metrics=['mse'])
-'''
     best_items = []
     best_value = 0
     
@@ -179,12 +162,34 @@ def NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations):
     return end_value
 
 iterations = 25
-start_time_qlearning = time.time()
-opt_val_qlearning = NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations)
-end_time_qlearning = time.time()
-run_time_qlearning = end_time_qlearning - start_time_qlearning
-print("For n = {} and W = {}:".format(n,W))
-print("Optimal Value Gurobi (Binary Programming): {}, in {} seconds.".format(opt_val_bin, run_time_bin))
-print('Optimal Value Dynamic Programming: {}, in {} seconds.'.format(opt_val_dyn, run_time_dyn))
-print('Optimal Value Greedy Heuristic: {}, in {} seconds.'.format(opt_val_greedy, run_time_greedy))
-print('Optimal Value Q-Learning: {}, in {} seconds.'.format(opt_val_qlearning, run_time_qlearning))
+
+
+for n in n_values:
+    for w_max in w_max_values:
+        w,v,W = GenerateKnapsackData(n, w_max, alpha)
+        
+        
+        start_time_bin = time.time()
+        opt_val_bin = BinaryProgrammingKnapsack(n, w, v, W)
+        end_time_bin = time.time()
+        run_time_bin = end_time_bin - start_time_bin
+        print("n = {} and w_max = {}".format(n,w_max))
+        print("Optimal Value Gurobi (Binary Programming): {}, in {} seconds.".format(opt_val_bin, run_time_bin))
+        
+        start_time_dyn = time.time()
+        opt_val_dyn = DynamicProgrammingKnapsack(n,w,v,W)
+        end_time_dyn = time.time()
+        run_time_dyn = end_time_dyn - start_time_dyn
+        print('Optimal Value Dynamic Programming: {}, in {} seconds.'.format(opt_val_dyn, run_time_dyn))
+        
+        start_time_greedy = time.time()
+        opt_val_greedy = GreedyHeuristicKnapsack(n,w,v,W)
+        end_time_greedy = time.time()
+        run_time_greedy = end_time_greedy - start_time_greedy
+        print('Optimal Value Greedy Heuristic: {}, in {} seconds.'.format(opt_val_greedy, run_time_greedy))
+        
+        start_time_qlearning = time.time()
+        opt_val_qlearning = NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations)
+        end_time_qlearning = time.time()
+        run_time_qlearning = end_time_qlearning - start_time_qlearning
+        print('Optimal Value Q-Learning: {}, in {} seconds.'.format(opt_val_qlearning, run_time_qlearning))
