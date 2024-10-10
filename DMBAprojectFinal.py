@@ -29,14 +29,14 @@ def GenerateKnapsackData(n,w_max,alpha):
     return weights,profits,W
     
 n_values = [10,30,50]
-w_max_values = [10,10e3,10e5,10e6]
+w_max_values = [10,10e2,10e3,10e4,10e5]
 alpha = 0.4
 
 #%% 1. Binary Programming of KP
 def BinaryProgrammingKnapsack(n,w,v,W):
     knapsack = gp.Model("Knapsack Binary Programming")
     
-    # Indices
+    # Indices/
     index = [i for i in range(n)]
     
     # Parameters / Variables
@@ -95,14 +95,14 @@ def GreedyHeuristicKnapsack(n,w,v,W):
     i = 0
     while weight_knapsack < W and i<n:
         #add if item will not exceed the capacity W
-        if weight_knapsack+sorted_overview[1,i]<W:
-            weight_knapsack+=sorted_overview[1,i] 
-            value_knapsack+=sorted_overview[2,i]
+        if weight_knapsack+sorted_overview[2,i]<W:
+            weight_knapsack+=sorted_overview[2,i] 
+            value_knapsack+=sorted_overview[1,i]
             i+=1
             continue;  
         #keep looping (search remaining items)
         i+=1
-    return value_knapsack    
+    return value_knapsack     
 
 #%%4. Using a NN to approximately solve the Dynamic Programming (NDP) - We will do exercise 4 not 5
 
@@ -161,35 +161,65 @@ def NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations):
     end_value = sum([v[i] for i in best_items])
     return end_value
 
-iterations = 25
+# Initialize dictionaries to store results for each algorithm
+results_bin = {"objective_values": {}, "times": {}}
+results_greedy = {"objective_values": {}, "times": {}}
+results_qlearning = {"objective_values": {}, "times": {}}
+results_dyn = {"objective_values": {}, "times": {}}
 
+iterations = 25
 
 for n in n_values:
     for w_max in w_max_values:
-        w,v,W = GenerateKnapsackData(n, w_max, alpha)
+        # Generate knapsack data
+        w, v, W = GenerateKnapsackData(n, w_max, alpha)
         
-        
+        # 1. Binary Programming Knapsack
         start_time_bin = time.time()
         opt_val_bin = BinaryProgrammingKnapsack(n, w, v, W)
         end_time_bin = time.time()
         run_time_bin = end_time_bin - start_time_bin
-        print("n = {} and w_max = {}".format(n,w_max))
-        print("Optimal Value Gurobi (Binary Programming): {}, in {} seconds.".format(opt_val_bin, run_time_bin))
         
-        start_time_dyn = time.time()
-        opt_val_dyn = DynamicProgrammingKnapsack(n,w,v,W)
-        end_time_dyn = time.time()
-        run_time_dyn = end_time_dyn - start_time_dyn
-        print('Optimal Value Dynamic Programming: {}, in {} seconds.'.format(opt_val_dyn, run_time_dyn))
+        # Store objective value and time in dictionary
+        results_bin["objective_values"][(n, w_max)] = opt_val_bin
+        results_bin["times"][(n, w_max)] = run_time_bin
         
+        print(f"n = {n} and w_max = {w_max}")
+        print(f"Optimal Value Gurobi (Binary Programming): {opt_val_bin}, in {run_time_bin} seconds.")
+        
+        # 2. Greedy Heuristic Knapsack
         start_time_greedy = time.time()
-        opt_val_greedy = GreedyHeuristicKnapsack(n,w,v,W)
+        opt_val_greedy = GreedyHeuristicKnapsack(n, w, v, W)
         end_time_greedy = time.time()
         run_time_greedy = end_time_greedy - start_time_greedy
-        print('Optimal Value Greedy Heuristic: {}, in {} seconds.'.format(opt_val_greedy, run_time_greedy))
         
+        # Store objective value and time in dictionary
+        results_greedy["objective_values"][(n, w_max)] = opt_val_greedy
+        results_greedy["times"][(n, w_max)] = run_time_greedy
+        
+        print(f"Optimal Value Greedy Heuristic: {opt_val_greedy}, in {run_time_greedy} seconds.")
+        
+        # 3. Neural Dynamic Programming Knapsack (Q-Learning)
         start_time_qlearning = time.time()
-        opt_val_qlearning = NeuralDynamicProgrammingKnapsack(n,w,v,W, iterations)
+        opt_val_qlearning = NeuralDynamicProgrammingKnapsack(n, w, v, W, iterations)
         end_time_qlearning = time.time()
         run_time_qlearning = end_time_qlearning - start_time_qlearning
-        print('Optimal Value Q-Learning: {}, in {} seconds.'.format(opt_val_qlearning, run_time_qlearning))
+        
+        # Store objective value and time in dictionary
+        results_qlearning["objective_values"][(n, w_max)] = opt_val_qlearning
+        results_qlearning["times"][(n, w_max)] = run_time_qlearning
+        
+        print(f"Optimal Value Q-Learning: {opt_val_qlearning}, in {run_time_qlearning} seconds.")
+        
+        if n == 50 and (w_max == 10e5 or w_max == 10e6):
+            continue
+        start_time_dyn = time.time()
+        opt_val_dyn = DynamicProgrammingKnapsack(n, w, v, W)
+        end_time_dyn = time.time()
+        run_time_dyn = end_time_dyn - start_time_dyn
+        
+        # Store objective value and time in dictionary
+        results_dyn["objective_values"][(n, w_max)] = opt_val_dyn
+        results_dyn["times"][(n, w_max)] = run_time_dyn
+        
+        print(f"Optimal Value Dynamic Programming: {opt_val_dyn}, in {run_time_dyn} seconds.")
